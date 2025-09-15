@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+package tages.service;
+import "google/protobuf/timestamp.proto";
+
+option go_package = "Tages/pkg";
+
+service FileService {
+    // Загрузка файла (streaming, чтобы принимать большие файлы)
+    rpc UploadFile(stream UploadRequest) returns (UploadResponse);
+
+    // Скачивание файла (streaming для отдачи)
+    rpc DownloadFile(DownloadRequest) returns (stream DownloadResponse);
+
+    // Получение списка файлов
+    rpc ListFiles(ListRequest) returns (ListResponse);
+}
+
+message UploadRequest {
+    bytes data = 1;  // Чанки файла
+    string filename = 2;  // Имя файла (в первом чанке)
+}
+message UploadResponse {
+    string message = 1;
+}
+
+message DownloadRequest {
+    string filename = 1;
+}
+message DownloadResponse {
+    bytes data = 1;
+}
+
+message ListRequest {}
+message ListResponse {
+    repeated FileInfo files = 1;
+}
+message FileInfo {
+    string name = 1;
+    string path = 2;
+    google.protobuf.Timestamp  created_at = 3;  
+    google.protobuf.Timestamp  updated_at = 4;
+}
