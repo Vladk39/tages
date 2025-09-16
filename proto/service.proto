@@ -6,10 +6,10 @@ import "google/protobuf/timestamp.proto";
 option go_package = "Tages/pkg";
 
 service FileService {
-    // Загрузка файла (streaming, чтобы принимать большие файлы)
+    // Загрузка файла 
     rpc UploadFile(UploadRequest) returns (UploadResponse);
 
-    // Скачивание файла (streaming для отдачи)
+    // Скачивание файла 
     rpc DownloadFile(DownloadRequest) returns (stream DownloadResponse);
 
     // Получение списка файлов
@@ -22,7 +22,8 @@ message UploadRequest {
 }
 message UploadResponse {
     bool status =1;
-    string path =2;
+    string name =2;
+    string path =3;
 }
 
 message DownloadRequest {

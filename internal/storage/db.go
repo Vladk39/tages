@@ -11,6 +11,15 @@ import (
 	"gorm.io/gorm"
 )
 
+type StorageInterface interface {
+	WithInTransaction(
+		ctx context.Context,
+		tFunc func(ctx context.Context) error,
+	) error
+	AddFile(ctx context.Context, f dto.File) error
+	GetAllFiles() ([]dto.File, error)
+}
+
 const ExtensionForPsg = `create extension if not exists "uuid-ossp"`
 
 // инкапсулируем логику создания подключения

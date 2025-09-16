@@ -7,7 +7,11 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type CacheInterface interface{}
+type CacheInterface interface {
+	Set(f dto.File)
+	GetFilesFromCache() []dto.File
+	Warm(files []dto.File)
+}
 
 type Cache struct {
 	data          map[string]dto.File
@@ -65,4 +69,12 @@ func (c *Cache) GetFilesFromCache() []dto.File {
 	}
 
 	return files
+}
+
+func (c *Cache) Warm(files []dto.File) {
+	c.rm.Lock()
+	for _, v := range files {
+		c.data[v.Name] = v
+	}
+	c.rm.Unlock()
 }

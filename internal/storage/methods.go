@@ -2,14 +2,15 @@ package storage
 
 import (
 	"Tages/internal/dto"
+	"context"
 
 	"github.com/pkg/errors"
 )
 
-const ErrNotFound = "not found"
+var ErrNotFound = errors.New("not found")
 
-func (s *Storage) AddFile(f dto.File) error {
-	err := s.conn.Create(f).Error
+func (s *Storage) AddFile(ctx context.Context, f dto.File) error {
+	err := s.conn.WithContext(ctx).Create(f).Error
 	if err != nil {
 		return errors.Wrapf(err, "cant create file %v", f)
 	}
@@ -26,7 +27,7 @@ func (s *Storage) GetAllFiles() ([]dto.File, error) {
 	}
 
 	if len(files) == 0 {
-		return nil, errors.New(ErrNotFound)
+		return nil, ErrNotFound
 	}
 
 	return files, nil

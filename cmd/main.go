@@ -29,6 +29,7 @@ func configure() {
 	viper.SetDefault("log.format", "json")
 	viper.SetDefault("log.level", "info")
 	viper.SetDefault("metrics.listen", ":9093")
+	viper.SetDefault("dsnpsg", "postgres://myuser:mypassword@localhost:5432/mydb?sslmode=disable")
 }
 
 func getLogger() *logrus.Logger {
