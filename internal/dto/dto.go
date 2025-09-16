@@ -1,8 +1,13 @@
 package dto
 
-import "time"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 type File struct {
+	ID        uuid.UUID
 	Name      string `json:"name"`
 	Path      string
 	CreatedAt time.Time `json:"created_at"`

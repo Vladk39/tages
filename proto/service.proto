@@ -7,7 +7,7 @@ option go_package = "Tages/pkg";
 
 service FileService {
     // Загрузка файла (streaming, чтобы принимать большие файлы)
-    rpc UploadFile(stream UploadRequest) returns (UploadResponse);
+    rpc UploadFile(UploadRequest) returns (UploadResponse);
 
     // Скачивание файла (streaming для отдачи)
     rpc DownloadFile(DownloadRequest) returns (stream DownloadResponse);
@@ -21,7 +21,8 @@ message UploadRequest {
     string filename = 2;  // Имя файла (в первом чанке)
 }
 message UploadResponse {
-    string message = 1;
+    bool status =1;
+    string path =2;
 }
 
 message DownloadRequest {

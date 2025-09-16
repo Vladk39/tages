@@ -1,34 +1,33 @@
 package service
 
 import (
+	"Tages/internal/cache"
 	"Tages/internal/dto"
-	"Tages/internal/helper"
+	"Tages/internal/storage"
 	pb "Tages/pkg"
 	"context"
-	"io"
 	"os"
-	"path/filepath"
 	"sync"
 
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 
-type UploadFileStream = pb.FileService_UploadFileServer
+const maxFileSize = 100 * 1024 * 1024
 
 type ServiceFile struct {
 	pb.UnimplementedFileServiceServer
-	uploadCh    chan struct{}
-	listFiles   chan struct{}
-	uploadDir   string
-	metaDataDir string
-	logger      *logrus.Logger
-	mu          sync.Mutex
-	fileMeta    map[string]dto.File
+	uploadCh  chan struct{}
+	listFiles chan struct{}
+	uploadDir string
+	cache     cache.CacheInterface
+	logger    *logrus.Logger
+	mu        sync.Mutex
+	storage   storage.Storage
+	fileMeta  map[string]dto.File
 }
 
-func NewServicefile(logger *logrus.Logger, ctx context.Context) *ServiceFile {
+func NewServicefile(ctx context.Context, logger *logrus.Logger, cache cache.CacheInterface, storage storage.Storage) *ServiceFile {
 	dir := viper.GetString("upload.dir")
 	if !ensureDir(logger, dir) {
 		return nil
@@ -38,68 +37,10 @@ func NewServicefile(logger *logrus.Logger, ctx context.Context) *ServiceFile {
 		uploadCh:  make(chan struct{}, 10),
 		listFiles: make(chan struct{}, 100),
 		uploadDir: dir,
-
-		logger:   logger,
-		fileMeta: make(map[string]dto.File),
+		cache:     cache,
+		logger:    logger,
+		fileMeta:  make(map[string]dto.File),
 	}
-}
-
-func (s *ServiceFile) UploadFile(ctx context.Context, stream UploadFileStream) error {
-	// Ограничение по параллельным аплоадам
-	s.uploadCh <- struct{}{}
-	defer func() { <-s.uploadCh }()
-
-	var (
-		filename string
-		file     *os.File
-	)
-
-	defer func() {
-		if file != nil {
-			_ = file.Close()
-		}
-	}()
-
-	for {
-		// Читаем чанк из стрима
-		req, err := stream.Recv()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return errors.Wrap(err, "failed to receive chunk")
-		}
-
-		// Определяем имя файла
-		if filename == "" {
-			filename = filepath.Base(req.Filename)
-			if filename == "" {
-				return errors.New("invalid filename")
-			}
-			uniqFileName := helper.UniqueFilename(filename)
-			path := filepath.Join(s.uploadDir, uniqFileName)
-
-			_, err := os.OpenFile(path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0644)
-			if err != nil {
-				return errors.Wrap(err, "failed to create file")
-			}
-
-		}
-
-		// Пишем данные
-		if _, err := file.Write(req.Data); err != nil {
-			return errors.Wrap(err, "failed to write chunk to file")
-		}
-
-		// Проверка отмены контекста
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		default:
-		}
-	}
-
-	return nil
 }
 
 func ensureDir(logger *logrus.Logger, dir string) bool {

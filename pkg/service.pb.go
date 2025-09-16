@@ -76,7 +76,8 @@ func (x *UploadRequest) GetFilename() string {
 
 type UploadResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Message       string                 `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
+	Status        bool                   `protobuf:"varint,1,opt,name=status,proto3" json:"status,omitempty"`
+	Path          string                 `protobuf:"bytes,2,opt,name=path,proto3" json:"path,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -111,9 +112,16 @@ func (*UploadResponse) Descriptor() ([]byte, []int) {
 	return file_service_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *UploadResponse) GetMessage() string {
+func (x *UploadResponse) GetStatus() bool {
 	if x != nil {
-		return x.Message
+		return x.Status
+	}
+	return false
+}
+
+func (x *UploadResponse) GetPath() string {
+	if x != nil {
+		return x.Path
 	}
 	return ""
 }
@@ -361,9 +369,10 @@ const file_service_proto_rawDesc = "" +
 	"\rservice.proto\x12\rtages.service\x1a\x1fgoogle/protobuf/timestamp.proto\"?\n" +
 	"\rUploadRequest\x12\x12\n" +
 	"\x04data\x18\x01 \x01(\fR\x04data\x12\x1a\n" +
-	"\bfilename\x18\x02 \x01(\tR\bfilename\"*\n" +
-	"\x0eUploadResponse\x12\x18\n" +
-	"\amessage\x18\x01 \x01(\tR\amessage\"-\n" +
+	"\bfilename\x18\x02 \x01(\tR\bfilename\"<\n" +
+	"\x0eUploadResponse\x12\x16\n" +
+	"\x06status\x18\x01 \x01(\bR\x06status\x12\x12\n" +
+	"\x04path\x18\x02 \x01(\tR\x04path\"-\n" +
 	"\x0fDownloadRequest\x12\x1a\n" +
 	"\bfilename\x18\x01 \x01(\tR\bfilename\"&\n" +
 	"\x10DownloadResponse\x12\x12\n" +
@@ -377,10 +386,10 @@ const file_service_proto_rawDesc = "" +
 	"\n" +
 	"created_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
-	"updated_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt2\xf3\x01\n" +
-	"\vFileService\x12K\n" +
+	"updated_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt2\xf1\x01\n" +
+	"\vFileService\x12I\n" +
 	"\n" +
-	"UploadFile\x12\x1c.tages.service.UploadRequest\x1a\x1d.tages.service.UploadResponse(\x01\x12Q\n" +
+	"UploadFile\x12\x1c.tages.service.UploadRequest\x1a\x1d.tages.service.UploadResponse\x12Q\n" +
 	"\fDownloadFile\x12\x1e.tages.service.DownloadRequest\x1a\x1f.tages.service.DownloadResponse0\x01\x12D\n" +
 	"\tListFiles\x12\x1a.tages.service.ListRequest\x1a\x1b.tages.service.ListResponseB\vZ\tTages/pkgb\x06proto3"
 

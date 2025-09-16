@@ -11,3 +11,6 @@ func UniqueFilename(filename string) string {
 	nanos := now.Nanosecond()
 	return fmt.Sprintf("%s_%d_%s", timestamp, nanos, filename)
 }
+
+
+func clean
