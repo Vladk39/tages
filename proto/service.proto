@@ -6,15 +6,22 @@ import "google/protobuf/timestamp.proto";
 option go_package = "Tages/pkg";
 
 service FileService {
-    // Загрузка файла 
-    rpc UploadFile(UploadRequest) returns (UploadResponse);
+    // Загрузка файла (стриминг)
+    rpc UploadFileStream(stream UploadRequest) returns (UploadResponse);
 
-    // Скачивание файла 
-    rpc DownloadFile(DownloadRequest) returns (stream DownloadResponse);
+    // Загрузка файла (унари)
+    rpc UploadFileUnary(UploadRequest) returns (UploadResponse);
+
+    // Скачивание файла (стриминг)
+    rpc DownloadFileStream(DownloadRequest) returns (stream DownloadResponse);
+
+    // Скачивание файла (унари)
+    rpc DownloadFileUnary(DownloadRequest) returns (DownloadResponse);
 
     // Получение списка файлов
     rpc ListFiles(ListRequest) returns (ListResponse);
 }
+
 
 message UploadRequest {
     bytes data = 1;  // Чанки файла
@@ -34,6 +41,7 @@ message DownloadResponse {
 }
 
 message ListRequest {}
+
 message ListResponse {
     repeated FileInfo files = 1;
 }

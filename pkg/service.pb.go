@@ -77,7 +77,8 @@ func (x *UploadRequest) GetFilename() string {
 type UploadResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Status        bool                   `protobuf:"varint,1,opt,name=status,proto3" json:"status,omitempty"`
-	Path          string                 `protobuf:"bytes,2,opt,name=path,proto3" json:"path,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Path          string                 `protobuf:"bytes,3,opt,name=path,proto3" json:"path,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -117,6 +118,13 @@ func (x *UploadResponse) GetStatus() bool {
 		return x.Status
 	}
 	return false
+}
+
+func (x *UploadResponse) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
 }
 
 func (x *UploadResponse) GetPath() string {
@@ -369,10 +377,11 @@ const file_service_proto_rawDesc = "" +
 	"\rservice.proto\x12\rtages.service\x1a\x1fgoogle/protobuf/timestamp.proto\"?\n" +
 	"\rUploadRequest\x12\x12\n" +
 	"\x04data\x18\x01 \x01(\fR\x04data\x12\x1a\n" +
-	"\bfilename\x18\x02 \x01(\tR\bfilename\"<\n" +
+	"\bfilename\x18\x02 \x01(\tR\bfilename\"P\n" +
 	"\x0eUploadResponse\x12\x16\n" +
 	"\x06status\x18\x01 \x01(\bR\x06status\x12\x12\n" +
-	"\x04path\x18\x02 \x01(\tR\x04path\"-\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12\x12\n" +
+	"\x04path\x18\x03 \x01(\tR\x04path\"-\n" +
 	"\x0fDownloadRequest\x12\x1a\n" +
 	"\bfilename\x18\x01 \x01(\tR\bfilename\"&\n" +
 	"\x10DownloadResponse\x12\x12\n" +
@@ -386,11 +395,12 @@ const file_service_proto_rawDesc = "" +
 	"\n" +
 	"created_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
-	"updated_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt2\xf1\x01\n" +
-	"\vFileService\x12I\n" +
-	"\n" +
-	"UploadFile\x12\x1c.tages.service.UploadRequest\x1a\x1d.tages.service.UploadResponse\x12Q\n" +
-	"\fDownloadFile\x12\x1e.tages.service.DownloadRequest\x1a\x1f.tages.service.DownloadResponse0\x01\x12D\n" +
+	"updated_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt2\xa5\x03\n" +
+	"\vFileService\x12Q\n" +
+	"\x10UploadFileStream\x12\x1c.tages.service.UploadRequest\x1a\x1d.tages.service.UploadResponse(\x01\x12N\n" +
+	"\x0fUploadFileUnary\x12\x1c.tages.service.UploadRequest\x1a\x1d.tages.service.UploadResponse\x12W\n" +
+	"\x12DownloadFileStream\x12\x1e.tages.service.DownloadRequest\x1a\x1f.tages.service.DownloadResponse0\x01\x12T\n" +
+	"\x11DownloadFileUnary\x12\x1e.tages.service.DownloadRequest\x1a\x1f.tages.service.DownloadResponse\x12D\n" +
 	"\tListFiles\x12\x1a.tages.service.ListRequest\x1a\x1b.tages.service.ListResponseB\vZ\tTages/pkgb\x06proto3"
 
 var (
@@ -420,14 +430,18 @@ var file_service_proto_depIdxs = []int32{
 	6, // 0: tages.service.ListResponse.files:type_name -> tages.service.FileInfo
 	7, // 1: tages.service.FileInfo.created_at:type_name -> google.protobuf.Timestamp
 	7, // 2: tages.service.FileInfo.updated_at:type_name -> google.protobuf.Timestamp
-	0, // 3: tages.service.FileService.UploadFile:input_type -> tages.service.UploadRequest
-	2, // 4: tages.service.FileService.DownloadFile:input_type -> tages.service.DownloadRequest
-	4, // 5: tages.service.FileService.ListFiles:input_type -> tages.service.ListRequest
-	1, // 6: tages.service.FileService.UploadFile:output_type -> tages.service.UploadResponse
-	3, // 7: tages.service.FileService.DownloadFile:output_type -> tages.service.DownloadResponse
-	5, // 8: tages.service.FileService.ListFiles:output_type -> tages.service.ListResponse
-	6, // [6:9] is the sub-list for method output_type
-	3, // [3:6] is the sub-list for method input_type
+	0, // 3: tages.service.FileService.UploadFileStream:input_type -> tages.service.UploadRequest
+	0, // 4: tages.service.FileService.UploadFileUnary:input_type -> tages.service.UploadRequest
+	2, // 5: tages.service.FileService.DownloadFileStream:input_type -> tages.service.DownloadRequest
+	2, // 6: tages.service.FileService.DownloadFileUnary:input_type -> tages.service.DownloadRequest
+	4, // 7: tages.service.FileService.ListFiles:input_type -> tages.service.ListRequest
+	1, // 8: tages.service.FileService.UploadFileStream:output_type -> tages.service.UploadResponse
+	1, // 9: tages.service.FileService.UploadFileUnary:output_type -> tages.service.UploadResponse
+	3, // 10: tages.service.FileService.DownloadFileStream:output_type -> tages.service.DownloadResponse
+	3, // 11: tages.service.FileService.DownloadFileUnary:output_type -> tages.service.DownloadResponse
+	5, // 12: tages.service.FileService.ListFiles:output_type -> tages.service.ListResponse
+	8, // [8:13] is the sub-list for method output_type
+	3, // [3:8] is the sub-list for method input_type
 	3, // [3:3] is the sub-list for extension type_name
 	3, // [3:3] is the sub-list for extension extendee
 	0, // [0:3] is the sub-list for field type_name

@@ -27,12 +27,12 @@ func TestUploadFileUnary(t *testing.T) {
 
 	mockStorage := &mocks.MockStorage{
 		AddFileFn: func(ctx context.Context, f dto.File) error { return nil },
-		WithInTransactionFn: func(ctx context.Context, fn func(txCtx context.Context) error) error {
+		WithInTransactionFn: func(ctx context.Context, fn func(ctx context.Context) error) error {
 			return fn(ctx)
 		},
 	}
 
-	srv := service.NewServicefile(context.Background(), logger, c, mockStorage)
+	srv, _ := service.NewServicefile(context.Background(), logger, c, mockStorage)
 
 	imgData, _ := os.ReadFile("./cat.jpg")
 

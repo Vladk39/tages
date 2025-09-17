@@ -2,7 +2,9 @@ package storage
 
 import (
 	"Tages/internal/dto"
+	"Tages/internal/metrics"
 	"context"
+	"time"
 
 	"github.com/pkg/errors"
 )
@@ -10,25 +12,33 @@ import (
 var ErrNotFound = errors.New("not found")
 
 func (s *Storage) AddFile(ctx context.Context, f dto.File) error {
+	start := time.Now()
+
 	err := s.conn.WithContext(ctx).Create(f).Error
+
+	status := "success"
 	if err != nil {
-		return errors.Wrapf(err, "cant create file %v", f)
+		status = "error"
 	}
 
-	return nil
+	metrics.DBMetricsFunc(status, "add_file", start)
+	return err
 }
 
-func (s *Storage) GetAllFiles() ([]dto.File, error) {
+func (s *Storage) GetAllFiles(ctx context.Context) ([]dto.File, error) {
+	start := time.Now()
+
 	var files []dto.File
+	err := s.conn.WithContext(ctx).Find(&files).Error
 
-	err := s.conn.Find(&files).Error
+	status := "success"
 	if err != nil {
-		return nil, errors.Wrap(err, "cant get files")
+		status = "error"
+	} else if len(files) == 0 {
+		err = ErrNotFound
+		status = "not_found"
 	}
 
-	if len(files) == 0 {
-		return nil, ErrNotFound
-	}
-
-	return files, nil
+	metrics.DBMetricsFunc(status, "get_all_files", start)
+	return files, err
 }
