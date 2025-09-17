@@ -9,8 +9,6 @@ services:
       PGDATA: "/var/lib/postgresql/data"
     ports:
       - "5432:5432"
-    networks:
-      - wb_net
     volumes:
       - ./localfs.data/db:/var/lib/postgresql/data
     healthcheck:
@@ -18,14 +16,13 @@ services:
       interval: 3s
       timeout: 30s
       retries: 10
+
   prometheus:
     image: prom/prometheus:latest
-    container_name: prometheus
+    container_name: prometheusTages
     ports:
-      - "9090:9090"
+      - "9093:9093"
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
-    networks:
-      - wb_net
     depends_on:
-      - app
+      - postgres

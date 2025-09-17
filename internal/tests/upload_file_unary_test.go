@@ -70,7 +70,7 @@ func TestUploadFileUnaryConcurrent(t *testing.T) {
 	dir := t.TempDir()
 	viper.Set("upload.dir", dir)
 
-	srv := service.NewServicefile(context.Background(), logger, c, mockStorage)
+	srv, err := service.NewServicefile(context.Background(), logger, c, mockStorage)
 
 	for i := 0; i < numGoroutines; i++ {
 		go func(i int) {

@@ -7,9 +7,9 @@ import (
 )
 
 type File struct {
-	ID        uuid.UUID
-	Name      string `json:"name"`
-	Path      string
+	ID        uuid.UUID `gorm:"type:uuid;default:uuid_generate_v4();primaryKey"`
+	Name      string    `json:"name"`
+	Path      string    `json:"-"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }

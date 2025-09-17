@@ -78,7 +78,10 @@ func (s *Storage) Init(ctx context.Context) error {
 		return errors.Wrap(err, "cant create extension for postgres")
 	}
 
-	return s.conn.WithContext(ctx).AutoMigrate(&dto.File{})
+	if err := s.conn.WithContext(ctx).AutoMigrate(&dto.File{}); err != nil {
+		return errors.Wrap(err, "failed to automigrate File")
+	}
+	return nil
 }
 
 // drop table

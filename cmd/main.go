@@ -3,12 +3,14 @@ package main
 import (
 	"context"
 	"net"
+	"net/http"
 	"os"
 	"syscall"
 	"time"
 
 	"Tages/internal/cache"
 	"Tages/internal/metrics"
+	"Tages/internal/ratelimiter"
 	"Tages/internal/service"
 	"Tages/internal/storage"
 	"Tages/pkg"
@@ -16,6 +18,7 @@ import (
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/oklog/run"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
@@ -25,9 +28,6 @@ var (
 	reg         = prometheus.NewRegistry()
 	grpcMetrics = grpc_prometheus.NewServerMetrics()
 )
-
-// grpc.UnaryInterceptor(rateLimiter.UnaryInterceptor()),
-// 	grpc.StreamInterceptor(rateLimiter.StreamInterceptor()),
 
 func main() {
 	var g run.Group
@@ -43,7 +43,7 @@ func main() {
 
 	configure()
 	logger := getLogger()
-	logger.Info("Starting service")
+	logger.Info("Starting service...")
 
 	logger.Info("Opening storage...")
 	store, err := getStorage(ctx, logger)
@@ -60,6 +60,20 @@ func main() {
 	if err != nil {
 		logger.WithError(err).Fatal("Failed to init service")
 	}
+
+	logger.Info("Create ratelimiter...")
+
+	viper.SetDefault("ratelimiter.tokens", 10)
+	viper.SetDefault("ratelimiter.interval_ms", 1000)
+
+	rateCoin := viper.GetInt("ratelimiter.tokens")
+	rateRefresh := time.Duration(viper.GetInt("ratelimiter.interval_ms")) * time.Millisecond
+	rateLimiter := ratelimiter.New(rateCoin, rateRefresh, logger)
+	defer rateLimiter.Stop()
+
+	go func() {
+		srv.HeatCache(ctx)
+	}()
 
 	var grpcs *grpc.Server
 
@@ -81,10 +95,12 @@ func main() {
 			grpc.ChainStreamInterceptor(
 				grpcMetrics.StreamServerInterceptor(),
 				metrics.StreamErrorMetricsInterceptor(),
+				rateLimiter.StreamInterceptor(),
 			),
 			grpc.ChainUnaryInterceptor(
 				grpcMetrics.UnaryServerInterceptor(),
 				metrics.UnaryErrorMetricsInterceptor(),
+				rateLimiter.UnaryInterceptor(),
 			),
 		)
 
@@ -102,16 +118,61 @@ func main() {
 
 		cancel()
 	})
+	g.Add(func() error {
+		mux := http.NewServeMux()
+		mux.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{}))
+
+		listenAddr := viper.GetString("metrics")
+		logger.Infof("Metrics listening on %s", listenAddr)
+
+		server := &http.Server{
+			Addr:    listenAddr,
+			Handler: mux,
+		}
+
+		go func() {
+			if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+				logger.WithError(err).Error("Metrics server stopped unexpectedly")
+			}
+		}()
+
+		<-ctx.Done()
+		return server.Shutdown(context.Background())
+	}, func(err error) {
+		logger.WithError(err).Info("Stopping metrics server")
+	})
+	g.Add(func() error {
+		<-ctx.Done()
+		logger.Info("Closing storage...")
+		if err := store.Close(ctx); err != nil {
+			logger.WithError(err).Error("Failed to close storage")
+			return err
+		}
+		logger.Info("Storage closed")
+		return nil
+	}, func(err error) {
+	})
+
+	if err := g.Run(); err != nil {
+		logger.WithError(err).Fatal("run group finished with error")
+	}
 
 }
 
 func configure() {
+	// сервак
 	viper.SetDefault("listen", ":8080")
+	// logger
 	viper.SetDefault("log.format", "json")
 	viper.SetDefault("log.level", "info")
-	viper.SetDefault("metrics.listen", ":9093")
+	// metrics
+	viper.SetDefault("metrics", ":9094")
+	// dsn postgresql
 	viper.SetDefault("db.dsn", "postgres://myuser:mypassword@localhost:5432/mydb?sslmode=disable")
-	viper.SetDefault("listen", ":8080")
+	// ratelimiter
+	viper.SetDefault("ratelimiter.tokens", 10)
+	viper.SetDefault("upload.dir", "../uploads")
+	viper.SetDefault("ratelimiter.interval_ms", 1000)
 }
 
 func getLogger() *logrus.Logger {
@@ -138,15 +199,21 @@ func getLogger() *logrus.Logger {
 
 func getStorage(ctx context.Context, log *logrus.Logger) (*storage.Storage, error) {
 	dsn := viper.GetString("db.dsn")
+	log.WithField("dsn", dsn).Info("Initializing storage connection")
 
 	store, err := storage.NewStorage(dsn)
 	if err != nil {
+		log.WithError(err).Error("Failed to create storage instance")
 		return nil, err
 	}
 
+	log.Info("Storage instance created, initializing...")
+
 	if err := store.Init(ctx); err != nil {
+		log.WithError(err).Error("Failed to initialize storage")
 		return nil, err
 	}
+	log.Info("Storage successfully initialized")
 
 	return store, nil
 }

@@ -123,6 +123,25 @@ func (s *ServiceFile) UploadFileStream(stream pb.FileService_UploadFileStreamSer
 	for {
 		req, err := stream.Recv()
 		if err == io.EOF {
+			savedFile := dto.File{
+				Name:      filename,
+				Path:      filepath.Join(s.uploadDir, filename),
+				CreatedAt: time.Now().UTC(),
+				UpdatedAt: time.Now().UTC(),
+			}
+
+			if err := s.storage.WithInTransaction(stream.Context(), func(txCtx context.Context) error {
+				if err := s.storage.AddFile(txCtx, savedFile); err != nil {
+					s.logger.WithError(err).Errorf("cant add file %v to database", savedFile)
+					return err
+				}
+				return nil
+			}); err != nil {
+				s.logger.WithError(err).Error("transaction failed")
+				return status.Errorf(codes.Internal, "failed to save file")
+			}
+
+			s.cache.Set(savedFile)
 
 			return stream.SendAndClose(&pb.UploadResponse{
 				Status: true,
@@ -258,16 +277,16 @@ func (s *ServiceFile) ListFiles(ctx context.Context, req *pb.ListRequest) (*pb.L
 
 // прогрев кеша при старте
 func (s *ServiceFile) HeatCache(ctx context.Context) error {
-	files := []dto.File{}
+	s.logger.Info("starting to fill the cache")
 
 	files, err := s.storage.GetAllFiles(ctx)
 	if err != nil {
-		s.logger.WithError(err).Error("failed warm up the cache")
+		s.logger.Error("error in heat cache")
 		return err
 	}
 
 	s.cache.Warm(files)
-
+	s.logger.Info("cache is full")
 	return nil
 }
 
