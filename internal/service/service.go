@@ -91,6 +91,7 @@ func (s *ServiceFile) UploadFileUnary(ctx context.Context, req *pb.UploadRequest
 			s.logger.WithError(err).Errorf("cant add file %v to database", f)
 			return err
 		}
+		s.logger.Infof("File %s added to DB", f.Name)
 		return nil
 	}); err != nil {
 		s.logger.WithError(err).Error("transaction failed")
@@ -135,6 +136,7 @@ func (s *ServiceFile) UploadFileStream(stream pb.FileService_UploadFileStreamSer
 					s.logger.WithError(err).Errorf("cant add file %v to database", savedFile)
 					return err
 				}
+				s.logger.Infof("File %s added to DB", savedFile.Name)
 				return nil
 			}); err != nil {
 				s.logger.WithError(err).Error("transaction failed")
