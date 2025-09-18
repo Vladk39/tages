@@ -55,6 +55,7 @@ func main() {
 	CacheDetector := make(chan bool, 1)
 	cache := cache.NewCache(logger, CacheDetector)
 	go cache.RunWatcher()
+	go metrics.CollectorGCHeapMetrics(ctx, logger, CacheDetector)
 
 	logger.Info("Creating service...")
 	srv, err := service.NewServicefile(ctx, logger, cache, store)
