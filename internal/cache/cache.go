@@ -59,6 +59,9 @@ func (c *Cache) Set(f dto.File) {
 }
 
 func (c *Cache) GetFilesFromCache() []dto.File {
+	if !c.enabled {
+		return nil
+	}
 	c.rm.RLock()
 	defer c.rm.RUnlock()
 

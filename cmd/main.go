@@ -54,6 +54,7 @@ func main() {
 	logger.Info("Creating cache...")
 	CacheDetector := make(chan bool, 1)
 	cache := cache.NewCache(logger, CacheDetector)
+	go cache.RunWatcher()
 
 	logger.Info("Creating service...")
 	srv, err := service.NewServicefile(ctx, logger, cache, store)

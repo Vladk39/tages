@@ -14,7 +14,7 @@ var ErrNotFound = errors.New("not found")
 func (s *Storage) AddFile(ctx context.Context, f dto.File) error {
 	start := time.Now()
 
-	err := s.conn.WithContext(ctx).Create(f).Error
+	err := s.conn.WithContext(ctx).Create(&f).Error
 
 	status := "success"
 	if err != nil {

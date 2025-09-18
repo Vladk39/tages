@@ -242,7 +242,7 @@ func (s *ServiceFile) DownloadFileUnary(ctx context.Context, req *pb.DownloadReq
 	}
 	defer file.Close()
 
-	data, err := os.ReadFile(filename)
+	data, err := os.ReadFile(path)
 	if err != nil {
 		s.logger.WithError(err).WithField("file", path).Error("cannot read file")
 		return nil, status.Error(codes.Internal, "failed to download file")
@@ -261,6 +261,13 @@ func (s *ServiceFile) ListFiles(ctx context.Context, req *pb.ListRequest) (*pb.L
 	}()
 
 	files := s.cache.GetFilesFromCache()
+	if files == nil {
+		var err error
+		files, err = s.storage.GetAllFiles(ctx)
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	resp := &pb.ListResponse{}
 	for _, v := range files {
